@@ -1,0 +1,33 @@
+---
+- name: Deploy Student Academic Platform
+  hosts: web
+  become: true
+  gather_facts: true
+
+  roles:
+    - common
+    - docker
+    - nginx
+    - app
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+  post_tasks:
+    - name: Validate Nginx configuration
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Wait for application health endpoint
+      ansible.builtin.uri:
+        url: http://127.0.0.1/api/health
+        status_code: 200
+        return_content: true
+      register: health_check
+      retries: 12
+      delay: 5
+      until: health_check.status == 200
+      changed_when: false

@@ -1,0 +1,48 @@
+
+---
+- name: Create application directory on server
+  ansible.builtin.file:
+    path: /opt/student-app
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy compressed Flask application to server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../application.tar.gz"
+    dest: /tmp/application.tar.gz
+    owner: root
+    group: root
+    mode: "0644"
+  register: app_archive_copy
+
+- name: Extract Flask application on server
+  ansible.builtin.unarchive:
+    src: /tmp/application.tar.gz
+    dest: /opt/student-app/
+    remote_src: true
+    owner: root
+    group: root
+  when: app_archive_copy.changed
+  register: app_extract
+
+- name: Build Student App Docker image
+  community.docker.docker_image:
+    name: student-app
+    tag: latest
+    source: build
+    force_source: true
+    build:
+      path: /opt/student-app
+  when: app_extract.changed | default(false)
+
+- name: Run Student App container
+  community.docker.docker_container:
+    name: student-app
+    image: student-app:latest
+    state: started
+    restart_policy: unless-stopped
+    published_ports:
+      - "127.0.0.1:5000:5000"
+

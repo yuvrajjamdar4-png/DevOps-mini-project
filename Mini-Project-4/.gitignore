@@ -1,0 +1,24 @@
+
+# Local environments and generated files
+.venv/
+.venv-backup/
+venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Terraform local data and state
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Credentials and private keys
+.env
+.env.*
+!.env.example
+.aws/
+*.pem
+*.key
+credentials
